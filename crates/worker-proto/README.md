@@ -25,22 +25,13 @@ Use `nemo-relay-worker` to author Rust workers. Depend on this crate directly
 only when implementing another worker SDK, a custom host, or protocol-level
 tooling.
 
-## Why Use It?
+## Protocol Surface
 
-- **Share the stable transport contract**: Use the `grpc-v1` service and
-  message definitions accepted by Relay worker manifests.
-- **Use generated Tonic bindings**: Access versioned client and server types
-  from `v1` without generating protobuf code in a consumer project.
-- **Keep data ownership clear**: Carry Relay DTOs in JSON envelopes backed by
-  `nemo-relay-types`; protobuf owns transport control flow.
-
-## What You Get
-
-- **`WORKER_PROTOCOL_GRPC_V1`**: The stable `grpc-v1` protocol identifier.
-- **`v1` module**: Generated `PluginWorker` and `RelayHostRuntime` gRPC
-  clients, servers, services, and messages.
-- **JSON envelope helpers**: `json_envelope` and `decode_json_envelope` for
-  serializing Relay DTOs into protocol payloads.
+| Surface | Role |
+|---|---|
+| `WORKER_PROTOCOL_GRPC_V1` | Identifies the stable protocol accepted by Relay worker manifests. |
+| `v1` module | Exposes generated `PluginWorker` and `RelayHostRuntime` Tonic clients, servers, services, and messages without regenerating protobuf in a consumer. |
+| JSON envelope helpers | Serialize Relay DTOs through `json_envelope` and `decode_json_envelope`, keeping protobuf responsible for transport flow rather than runtime data modeling. |
 
 ## Installation
 
@@ -68,8 +59,7 @@ fn main() -> Result<(), serde_json::Error> {
 }
 ```
 
-## Documentation
-
-- [NeMo Relay documentation](https://docs.nvidia.com/nemo/relay)
-- [Build Plugins guide](https://docs.nvidia.com/nemo/relay/build-plugins/about)
-- [Rust worker SDK](https://github.com/NVIDIA/NeMo-Relay/blob/main/crates/worker/README.md)
+The [grpc-v1 protocol reference](https://docs.nvidia.com/nemo/relay/build-plugins/workers/grpc-v1-protocol)
+describes the complete service contract. Prefer the [Rust worker
+SDK](https://github.com/NVIDIA/NeMo-Relay/blob/main/crates/worker/README.md)
+unless you are implementing that protocol directly.

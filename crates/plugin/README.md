@@ -24,33 +24,16 @@ Native plugins run in the Relay process and are not sandboxed. They should
 depend on this crate rather than the host `nemo-relay` runtime crate, keeping
 the dynamic-library boundary on the stable C-compatible ABI.
 
-## Why Use It?
+## Authoring Surface
 
-- **Author native plugins safely**: Implement `NativePlugin` with typed Rust
-  callbacks instead of constructing ABI tables directly.
-- **Register real runtime behavior**: Use `PluginContext` for subscribers,
-  guardrails, and intercepts.
-- **Keep a stable boundary**: Export one versioned native entry point through
-  the `nemo_relay_plugin!` macro.
-- **Use host runtime helpers**: Emit events and manage scope state through the
-  high-level `PluginRuntime` wrapper.
-
-## What You Get
-
-- **`NativePlugin`**: Plugin kind, configuration validation, and registration
-  lifecycle contract.
-- **`PluginContext`**: Component-scoped registration APIs for middleware and
-  subscribers.
-- **`PluginRuntime`**: Typed helpers for Relay-owned scopes and marks.
-- **Stable native ABI v4**: C-compatible host and plugin tables behind the
-  safe Rust authoring interface. Relay negotiates frozen v3 and v2 tables for
-  previously compiled plugins.
-- **Typed async middleware**: Every typed guardrail, sanitizer, and intercept
-  returns a future driven by a per-plugin SDK-owned Tokio runtime. Subscribers
-  and raw synchronous ABI registrations remain synchronous.
-- **Async continuations and streams**: Cloneable `ToolNext`, `LlmNext`, and
-  `LlmStreamNext` handles support repeated or concurrent calls. Streaming LLM
-  continuations use a pull-based host handle.
+| Surface | Role |
+|---|---|
+| `NativePlugin` | Defines plugin identity, configuration validation, registration, and multiple-component behavior without requiring an author to construct ABI tables. |
+| `PluginContext` | Installs component-owned subscribers, guardrails, intercepts, continuations, and streams. |
+| `PluginRuntime` | Emits marks and manages Relay-owned scopes and scope stacks through typed host helpers. |
+| `nemo_relay_plugin!` | Exports the one versioned native entry point used by the loader. |
+| Native ABI v4 | Keeps C-compatible host and plugin tables behind the safe Rust interface while the host retains frozen v3 and v2 tables for previously compiled plugins. |
+| Typed async middleware | Drives guardrails, sanitizers, and intercepts on a per-component SDK-owned Tokio executor. Subscribers and raw ABI registrations remain synchronous. |
 
 ## Installation
 
@@ -94,7 +77,7 @@ nemo_relay_plugin::nemo_relay_plugin!(nemo_relay_register_plugin, || ExamplePlug
 ```
 
 Build the `cdylib`, describe its entry symbol and compatibility in a
-`relay-plugin.toml` manifest, then register it through the Relay CLI. See the
+`relay-plugin.toml` manifest, then register it through the Relay CLI. Refer to the
 complete example for platform-specific artifact and manifest setup.
 
 Typed async plugins require `compat.relay = ">=0.8.0,<1.0"`. Relay creates one
@@ -143,8 +126,6 @@ Relay scope context is restored around every poll of a registered middleware
 future. Child tasks created with `tokio::spawn` do not automatically inherit
 that scope context.
 
-## Documentation
-
-- [NeMo Relay documentation](https://docs.nvidia.com/nemo/relay)
-- [Build Plugins guide](https://docs.nvidia.com/nemo/relay/build-plugins/about)
-- [Rust native plugin example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/rust-native-plugin/README.md)
+The [native plugin guide](https://docs.nvidia.com/nemo/relay/build-plugins/native/about)
+connects these APIs to packaging, configuration, and the complete [Rust
+example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/rust-native-plugin/README.md).

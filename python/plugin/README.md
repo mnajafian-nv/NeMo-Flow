@@ -21,28 +21,17 @@ dynamic worker plugins. Use it when plugin code should run in its own Python
 process and communicate with Relay through the versioned `grpc-v1` worker
 protocol.
 
-## Why Use It?
+## Authoring Surface
 
-- **Isolate plugin dependencies**: Run custom policy, middleware, or exporter
-  code outside the Relay host process.
-- **Use the shared runtime contract**: Register subscribers, guardrails, and
-  intercepts through `WorkerPlugin` and `PluginContext`.
-- **Call back into Relay safely**: Emit marks, create scopes, and continue
-  managed execution through the host runtime handle.
-- **Keep worker lifecycle managed**: Let Relay provision the worker environment,
-  start the entrypoint, and supply authenticated local endpoints.
+| Surface | Role |
+|---|---|
+| `WorkerPlugin` and `PluginContext` | Define validation and install all 15 worker-owned subscriber and middleware registrations. |
+| `serve_plugin` | Starts an AsyncIO gRPC server from the Relay-managed environment and authenticated local activation endpoints. |
+| Typed runtime helpers | Share JSON, event, scope, middleware, continuation, and diagnostic contracts with the Relay host. |
+| Generated transport bindings | Ship private protobuf bindings in the wheel, so installation does not require `protoc` or `grpcio-tools`. |
 
-## What You Get
-
-- **`WorkerPlugin` and `PluginContext`**: The plugin validation and registration
-  contract for worker-owned runtime behavior.
-- **`serve_plugin`**: An AsyncIO gRPC server wired to the Relay-managed worker
-  environment.
-- **Typed runtime helpers**: JSON, event, scope, middleware, continuation, and
-  diagnostic types shared with Relay.
-- **Generated transport bindings**: Private protobuf bindings included in built
-  wheels; published-wheel installation does not require `protoc` or
-  `grpcio-tools`.
+The worker process isolates Python dependencies and crashes from Relay while preserving
+host-owned execution, event, scope, cancellation, and shutdown semantics.
 
 ## Installation
 
@@ -101,7 +90,7 @@ Set `load.entrypoint` to `your_module:main` in `relay-plugin.toml`. Relay
 imports that function and awaits the returned coroutine when it starts the
 worker process.
 
-For a complete manifest and runnable plugin, see the
+For a complete manifest and runnable plugin, refer to the
 [Python gRPC worker plugin example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/python-grpc-worker-plugin/README.md).
 
 ## Request Intercepts
@@ -170,8 +159,6 @@ usable wheel for that platform. The NeMo Relay workspace skips installation and
 tests for this SDK on Windows ARM64 rather than creating a package without its
 required gRPC runtime.
 
-## Documentation
-
-- [NeMo Relay documentation](https://docs.nvidia.com/nemo/relay)
-- [Build Plugins guide](https://docs.nvidia.com/nemo/relay/build-plugins/about)
-- [Python gRPC worker plugin example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/python-grpc-worker-plugin/README.md)
+The [Python worker guide](https://docs.nvidia.com/nemo/relay/build-plugins/workers/python)
+connects these callbacks to packaging, managed environments, and the complete
+[Python example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/python-grpc-worker-plugin/README.md).

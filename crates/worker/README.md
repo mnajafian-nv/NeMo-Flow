@@ -20,26 +20,18 @@ SPDX-License-Identifier: Apache-2.0
 dynamic worker plugins. Use it when plugin code needs process isolation and
 communicates with Relay through the versioned `grpc-v1` worker protocol.
 
-## Why Use It?
+## Authoring Surface
 
-- **Isolate plugin code**: Run custom runtime behavior outside the Relay host
-  process.
-- **Use typed registration APIs**: Implement `WorkerPlugin` and register
-  subscribers, guardrails, or intercepts with `PluginContext`.
-- **Call the host runtime**: Emit marks, manage scopes, and invoke middleware
-  continuations through `PluginRuntime`.
-- **Keep lifecycle managed**: Let Relay provide authenticated endpoints and
-  start the worker with `serve_plugin`.
+| Surface | Role |
+|---|---|
+| `WorkerPlugin` | Defines plugin identity, validation, registration, and multiple-component behavior in the worker process. |
+| `PluginContext` | Installs typed handlers for all 15 supported registration surfaces. |
+| `PluginRuntime` and continuations | Emit marks, manage scopes, and call the remaining tool or LLM execution chain through the authenticated host service. |
+| `serve_plugin` | Starts the Tokio gRPC server from the activation identity, local endpoints, and token supplied by Relay. |
 
-## What You Get
-
-- **`WorkerPlugin`**: The plugin identity, validation, and registration
-  contract.
-- **`PluginContext`**: Typed registrations for all supported worker surfaces.
-- **`PluginRuntime` and continuations**: Host-runtime callbacks and tool/LLM
-  execution-chain helpers.
-- **`serve_plugin`**: Tokio gRPC server startup using the Relay-provided worker
-  environment.
+This model keeps plugin dependencies and crashes outside the Relay process, while the
+SDK retains the shared runtime contract and manages authentication, cancellation, and
+shutdown.
 
 ## Installation
 
@@ -93,8 +85,7 @@ or stops consuming a stream, and the SDK aborts the matching async callback
 task. An accepted cancellation confirms the task was found; it cannot prove
 that arbitrary blocking work started by the callback has stopped.
 
-## Documentation
-
-- [NeMo Relay documentation](https://docs.nvidia.com/nemo/relay)
-- [Build Plugins guide](https://docs.nvidia.com/nemo/relay/build-plugins/about)
-- [Python gRPC worker plugin example](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/python-grpc-worker-plugin/README.md)
+The [Rust worker guide](https://docs.nvidia.com/nemo/relay/build-plugins/workers/rust)
+connects this SDK to packaging and host activation. Complete [Rust](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/rust-grpc-worker-plugin/README.md)
+and [Python](https://github.com/NVIDIA/NeMo-Relay/blob/main/examples/python-grpc-worker-plugin/README.md)
+workers demonstrate the same middleware contract.
