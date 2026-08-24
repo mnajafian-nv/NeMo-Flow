@@ -162,7 +162,9 @@ export interface PendingMarkSpec {
   category?: string | null;
   categoryProfile?: Json;
   data?: Json;
+  dataSchema?: { name: string; version: string } | null;
   metadata?: Json;
+  severity?: 'trace' | 'debug' | 'info' | 'warn' | 'warning' | 'error' | null;
 }
 ```
 
@@ -287,11 +289,24 @@ Component-scoped registration context passed to plugin handlers.
 
 ```ts
 export interface PluginContext {
+  /** Register an activation-owned eligibility gate for a global runtime registration. */
+  registerConditionalMiddlewareGuardrail(
+    name: string,
+    kinds: RuntimeRegistrationKind[],
+    registrationName: string,
+    guardrail: (kinds: RuntimeRegistrationKind[], registrationName: string) => string | null,
+  ): void;
   /**
    * Register an event subscriber for this component. Callback failures are isolated and reported
    * through the Node binding's callback-error channel; flushSubscribers waits for returned promises.
    */
   registerSubscriber(name: string, callback: (event: Json) => void | Promise<void>): void;
+  /** Register an event metadata injector for this component. */
+  registerEventMetadataInjector(
+    name: string,
+    priority: number,
+    callback: (event: Json) => EventMetadata | Promise<EventMetadata>,
+  ): void;
   /** Register a mark event sanitizer for this component. */
   registerMarkSanitizeGuardrail(
     name: string,
@@ -366,13 +381,16 @@ export interface PluginContext {
   /**
    * Register an LLM streaming execution intercept for this component.
    *
-   * The `next` callback resolves to all downstream chunks. Returning an array
-   * preserves those chunks; any other JSON value produces one chunk.
+   * The `next` callback resolves to a lazy stream. Return that stream to
+   * preserve incremental downstream delivery.
    */
   registerLlmStreamExecutionIntercept(
     name: string,
     priority: number,
-    callback: (request: Json, next: (request: Json) => Promise<Json[]>) => Json | Json[] | Promise<Json | Json[]>,
+    callback: (
+      request: Json,
+      next: (request: Json) => Promise<AsyncIterable<Json>>,
+    ) => AsyncIterable<Json> | Promise<AsyncIterable<Json>>,
   ): void;
   /** Register a tool request intercept for this component. */
   registerToolRequestIntercept(
@@ -639,9 +657,8 @@ Codec identity available while a managed LLM event is sanitized.
 ```ts
 export type LlmCodecIdentity =
   | { kind: 'none' }
-  | { kind: 'builtin'; id: 'openai_chat' | 'openai_responses' | 'anthropic_messages' | 'oci_genai' | 'gemini_generate_content' }
-  | { kind: 'runtime'; id: string }
-  | { kind: 'opaque' };
+  | {
+      kind: 'builtin';
 ```
 
 ### `UnsupportedBehavior`
@@ -658,5 +675,29 @@ Execution lane for a dynamically loaded Relay plugin.
 
 ```ts
 export type DynamicPluginKind = 'rust_dynamic' | 'worker';
+```
+
+### `EventMetadataScalar`
+
+Scalar value accepted in event metadata additions.
+
+```ts
+export type EventMetadataScalar = string | number | boolean;
+```
+
+### `EventMetadataValue`
+
+Flat value accepted in event metadata additions. After JSON conversion, numeric arrays must contain only integer values or only floating-point values.
+
+```ts
+export type EventMetadataValue = EventMetadataScalar | string[] | number[] | boolean[];
+```
+
+### `EventMetadata`
+
+Metadata additions returned by an event metadata injector.
+
+```ts
+export type EventMetadata = Record<string, EventMetadataValue>;
 ```
 

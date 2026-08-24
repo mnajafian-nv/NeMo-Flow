@@ -2,7 +2,7 @@
 title: "nemo_relay.observability"
 sidebar-title: "observability"
 description: "Observability plugin configuration helpers."
-position: 9
+position: 10
 ---
 {/* SPDX-FileCopyrightText: Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: Apache-2.0 */}
@@ -124,6 +124,48 @@ def to_dict() -> JsonObject
 ```
 
 Serialize this endpoint to the canonical plugin shape.
+
+### `OpenTelemetrySignalEndpointConfig`
+
+One signal-specific OTLP destination for logs or metrics.
+
+#### Methods
+
+##### `to_dict`
+
+```python
+def to_dict() -> JsonObject
+```
+
+Serialize this signal endpoint to the canonical plugin shape.
+
+### `OpenTelemetryLogSectionConfig`
+
+OTLP log pipeline settings sourced from non-metric marks.
+
+#### Methods
+
+##### `to_dict`
+
+```python
+def to_dict() -> JsonObject
+```
+
+Serialize this log section to the canonical plugin shape.
+
+### `OpenTelemetryMetricSectionConfig`
+
+OTLP metric pipeline settings sourced from metric marks.
+
+#### Methods
+
+##### `to_dict`
+
+```python
+def to_dict() -> JsonObject
+```
+
+Serialize this metric section to the canonical plugin shape.
 
 ### `OpenTelemetrySectionConfig`
 

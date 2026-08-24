@@ -307,15 +307,16 @@ initialize_plugins(config).await?;
 </Tabs>
 
 Initialize model pricing once during process or harness startup, before the
-managed LLM calls whose responses should be cost-annotated. In tests or
-reusable harnesses, clear plugin configuration during teardown if later cases
-need a different resolver.
+managed LLM calls or manual lifecycle end events whose responses should be
+cost-annotated. In tests or reusable harnesses, clear plugin configuration
+during teardown if later cases need a different resolver.
 
 Built-in response codecs attach estimated cost directly to
 `AnnotatedLlmResponse.usage.cost` when model pricing is known. Managed LLM
-wrappers also enrich decoded custom response-codec output when the custom codec
-returns `model` and `usage` but omits `usage.cost`. Existing cost values are
-preserved, so provider-reported cost remains authoritative in the annotation.
+wrappers and manual lifecycle endings also enrich decoded or supplied response
+annotations when they contain `model` and `usage` but omit `usage.cost`.
+Existing cost values are preserved, so provider-reported cost remains
+authoritative in the annotation.
 
 Observability exporters prefer codec-normalized usage and cost, then fall back to
 raw payload fields and model-pricing estimates, subject to each exporter's
@@ -368,6 +369,7 @@ Built-in codecs normalize provider field names as follows:
 | `total_tokens` | `total_tokens` | `total_tokens` | computed | `totalTokens` | `totalTokenCount` (or computed as prompt + candidates + thinking) |
 | `cache_read_tokens` | `prompt_tokens_details.cached_tokens` | `input_tokens_details.cached_tokens` | `cache_read_input_tokens` | `promptTokensDetails.cachedTokens` | `cachedContentTokenCount` |
 | `cache_write_tokens` | — | — | `cache_creation_input_tokens` | — | — |
+| `cost` | `cost_usd`, structured `cost`, or scalar `cost` (OpenRouter; USD provider-reported total) | `cost_usd` or structured `cost` | `cost_usd` or structured `cost` | — | — |
 
 Gemini `generateContent` thinking tokens (`thoughtsTokenCount`) are stored in `api_specific.thoughts_tokens` rather than `completion_tokens`, because Google bills them as output tokens but reports them separately. The cost estimate folds them into the effective output-token count so that the pricing table reflects the real billing cost.
 
