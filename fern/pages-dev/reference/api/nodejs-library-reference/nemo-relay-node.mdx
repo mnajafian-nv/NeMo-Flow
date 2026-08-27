@@ -94,6 +94,8 @@ export interface OpenTelemetryConfig {
   endpoint: string
   /** Extra exporter headers/metadata as string key/value pairs. */
   headers?: Json
+  /** Header names mapped to environment variables resolved during subscriber activation. */
+  headerEnv?: Record<string, string>
   /** Extra OpenTelemetry resource attributes as string key/value pairs. */
   resourceAttributes?: Json
   /** `service.name` resource attribute. Defaults to `"unknown_service"`. */
@@ -106,6 +108,8 @@ export interface OpenTelemetryConfig {
   instrumentationScope?: string
   /** Export timeout in milliseconds. Defaults to `3000`. */
   timeoutMillis?: number
+  /** Completed scope lineage retention in milliseconds as a `bigint`. Defaults to `60000`. */
+  completedSpanContextTtlMillis?: bigint
   /** Mark projection for full and OpenInference exporters. Defaults to `"inherit"`. */
   markProjection?: "inherit" | "event" | "tool"
   /** Mark names excluded from full and OpenInference projections. */
@@ -129,6 +133,8 @@ export interface OpenTelemetryLogConfig {
   transport?: "http_binary" | "grpc"
   /** Extra exporter headers/metadata as string key/value pairs. */
   headers?: Record<string, string>
+  /** Header names mapped to environment variables resolved during subscriber activation. */
+  headerEnv?: Record<string, string>
   /** Extra OpenTelemetry resource attributes as string key/value pairs. */
   resourceAttributes?: Record<string, string>
   /** `service.name` resource attribute. Defaults to `"unknown_service"`. */
@@ -149,6 +155,8 @@ export interface OpenTelemetryLogConfig {
   maxExportBatchSize?: number
   /** Maximum delay before a partial batch is exported. Defaults to `1000`. */
   scheduledDelayMillis?: number
+  /** Completed scope lineage retention in milliseconds as a `bigint`. Defaults to `60000`. */
+  completedSpanContextTtlMillis?: bigint
 }
 ```
 
@@ -164,6 +172,8 @@ export interface OpenTelemetryMetricConfig {
   transport?: "http_binary" | "grpc"
   /** Extra exporter headers/metadata as string key/value pairs. */
   headers?: Record<string, string>
+  /** Header names mapped to environment variables resolved during subscriber activation. */
+  headerEnv?: Record<string, string>
   /** Extra OpenTelemetry resource attributes as string key/value pairs. */
   resourceAttributes?: Record<string, string>
   /** `service.name` resource attribute. Defaults to `"unknown_service"`. */
@@ -335,8 +345,14 @@ export declare class OpenTelemetrySubscriber {
   register(name: string): void
   /** Deregister a subscriber by name. */
   deregister(name: string): boolean
-  /** Force a flush of finished spans through the exporter. */
+  /**
+   * Force a flush of finished spans through the exporter.
+   *
+   * A successful flush updates `runtimeDiagnostics()` with queue drops observed so far.
+   */
   forceFlush(): void
+  /** Return bounded runtime diagnostics recorded by this subscriber. */
+  runtimeDiagnostics(): Array<{ code: string; message: string; count: number }>
   /** Shut down the underlying tracer provider. */
   shutdown(): void
 }
@@ -354,7 +370,11 @@ export declare class OpenTelemetryLogSubscriber {
   register(name: string): void
   /** Deregister a subscriber by name. */
   deregister(name: string): boolean
-  /** Flush queued Relay events and the OTLP log processor. */
+  /**
+   * Flush queued Relay events and the OTLP log processor.
+   *
+   * A successful flush updates `runtimeDiagnostics()` with queue drops observed so far.
+   */
   forceFlush(): void
   /** Return bounded runtime diagnostics recorded by this subscriber. */
   runtimeDiagnostics(): Array<{ code: string; message: string; count: number }>
